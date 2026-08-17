@@ -1,0 +1,118 @@
+{
+  "$comment": "Seed data for the Oktane B2C demo. The MCP server loads this into SQLite on `npm run seed`. Runtime state (stock changes, orders) lives in the DB, never here.",
+  "sizing_guides": {
+    "basketball": {
+      "unit": "circumference_inches",
+      "rules": [
+        {
+          "size": "7",
+          "circumference": "29.5\"",
+          "label": "Official / Men's",
+          "min_age": 13,
+          "max_age": 99,
+          "notes": "Regulation size for men's high school, college, and pro play. The standard choice for players aged 13 and up."
+        },
+        {
+          "size": "6",
+          "circumference": "28.5\"",
+          "label": "Intermediate / Women's",
+          "min_age": 9,
+          "max_age": 12,
+          "notes": "Regulation for women's high school, college, and pro play, and for boys aged 9-12."
+        },
+        {
+          "size": "5",
+          "circumference": "27.5\"",
+          "label": "Youth",
+          "min_age": 5,
+          "max_age": 8,
+          "notes": "Standard youth ball for ages 5-8."
+        },
+        {
+          "size": "3",
+          "circumference": "22\"",
+          "label": "Mini",
+          "min_age": 2,
+          "max_age": 4,
+          "notes": "Mini ball for toddlers and skills training."
+        }
+      ]
+    }
+  },
+  "products": [
+    {
+      "sku": "CE-BB-GAME",
+      "name": "CourtEdge Official Game Basketball",
+      "category": "Basketballs",
+      "icon": "Dribbble",
+      "price_cents": 6499,
+      "blurb": "Composite leather, indoor/outdoor. The ball our sizing guide is built around.",
+      "sizing_guide": "basketball",
+      "variants": [
+        { "sku": "CE-BB-GAME-7", "size": "7", "label": "Size 7 - 29.5\" Official", "price_cents": 6499, "stock": 0 },
+        { "sku": "CE-BB-GAME-6", "size": "6", "label": "Size 6 - 28.5\" Intermediate", "price_cents": 5999, "stock": 14 },
+        { "sku": "CE-BB-GAME-5", "size": "5", "label": "Size 5 - 27.5\" Youth", "price_cents": 4999, "stock": 22 },
+        { "sku": "CE-BB-GAME-3", "size": "3", "label": "Size 3 - 22\" Mini", "price_cents": 2999, "stock": 31 }
+      ]
+    },
+    {
+      "sku": "CE-SHOE-FLIGHT",
+      "name": "CourtEdge Flight High-Top",
+      "category": "Footwear",
+      "icon": "Footprints",
+      "price_cents": 12999,
+      "blurb": "Ankle support and grip for hardwood cuts.",
+      "variants": [
+        { "sku": "CE-SHOE-FLIGHT-9", "size": "9", "label": "US 9", "price_cents": 12999, "stock": 6 },
+        { "sku": "CE-SHOE-FLIGHT-10", "size": "10", "label": "US 10", "price_cents": 12999, "stock": 9 },
+        { "sku": "CE-SHOE-FLIGHT-11", "size": "11", "label": "US 11", "price_cents": 12999, "stock": 4 }
+      ]
+    },
+    {
+      "sku": "CE-HOOP-DRIVEWAY",
+      "name": "CourtEdge Driveway Hoop System",
+      "category": "Hoops",
+      "icon": "Target",
+      "price_cents": 34999,
+      "blurb": "Height-adjustable 7.5-10ft, tempered glass backboard.",
+      "variants": [
+        { "sku": "CE-HOOP-DRIVEWAY-STD", "size": "STD", "label": "Standard", "price_cents": 34999, "stock": 3 }
+      ]
+    },
+    {
+      "sku": "CE-JERSEY-REV",
+      "name": "CourtEdge Reversible Practice Jersey",
+      "category": "Apparel",
+      "icon": "Shirt",
+      "price_cents": 3499,
+      "blurb": "Two looks, one jersey. Moisture-wicking mesh.",
+      "variants": [
+        { "sku": "CE-JERSEY-REV-S", "size": "S", "label": "Small", "price_cents": 3499, "stock": 18 },
+        { "sku": "CE-JERSEY-REV-M", "size": "M", "label": "Medium", "price_cents": 3499, "stock": 25 },
+        { "sku": "CE-JERSEY-REV-L", "size": "L", "label": "Large", "price_cents": 3499, "stock": 11 }
+      ]
+    },
+    {
+      "sku": "CE-PUMP-DUAL",
+      "name": "CourtEdge Dual-Action Pump",
+      "category": "Accessories",
+      "icon": "Wind",
+      "price_cents": 1899,
+      "blurb": "Inflates on both strokes. Needle set included.",
+      "variants": [
+        { "sku": "CE-PUMP-DUAL-STD", "size": "STD", "label": "Standard", "price_cents": 1899, "stock": 47 }
+      ]
+    },
+    {
+      "sku": "CE-BAG-CARRY",
+      "name": "CourtEdge Team Carry Bag",
+      "category": "Bags",
+      "icon": "Backpack",
+      "price_cents": 5499,
+      "blurb": "Holds six balls, vented shoe compartment.",
+      "variants": [
+        { "sku": "CE-BAG-CARRY-STD", "size": "STD", "label": "Standard", "price_cents": 5499, "stock": 8 }
+      ]
+    }
+  ]
+}

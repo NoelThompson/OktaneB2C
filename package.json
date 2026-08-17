@@ -1,0 +1,28 @@
+{
+  "name": "oktane-b2c",
+  "version": "1.0.0",
+  "description": "Oktane B2C - CourtEdge retail storefront secured with Okta for AI Agents",
+  "private": true,
+  "workspaces": [
+    "apps/web",
+    "packages/mcp-server"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=apps/web",
+    "dev:web": "npm run dev --workspace=apps/web",
+    "dev:mcp": "npm run dev --workspace=packages/mcp-server",
+    "dev:agent": "./scripts/dev-agent.sh",
+    "dev:all": "./scripts/dev.sh",
+    "build": "npm run build --workspace=packages/mcp-server && npm run build --workspace=apps/web",
+    "seed": "npm run seed --workspace=packages/mcp-server"
+  },
+  "keywords": [
+    "okta",
+    "ai-agents",
+    "cross-app-access",
+    "id-jag",
+    "mcp",
+    "step-up"
+  ],
+  "license": "MIT"
+}
