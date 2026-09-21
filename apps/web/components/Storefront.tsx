@@ -6,6 +6,7 @@ import type {
   ChatMessage,
   ChatTurn,
   Intent,
+  Notification,
   Product,
   Profile,
   TraceEvent,
@@ -23,6 +24,7 @@ interface RaisedApproval {
   approval_id: string;
   summary: string;
   resume_url: string;
+  notification?: Notification | null;
 }
 
 let messageSeq = 0;
@@ -235,6 +237,7 @@ export default function Storefront({
           approval={raised ? approval : null}
           approvalSummary={raised?.summary ?? ''}
           resumeUrl={raised?.resume_url ?? '#'}
+          notification={raised?.notification ?? null}
           onSend={send}
           busy={busy}
           signedIn={profile !== null}

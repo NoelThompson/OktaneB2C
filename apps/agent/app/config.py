@@ -99,6 +99,48 @@ class Settings:
     catalog_issuer_okta: str = field(default_factory=lambda: _env("OKTA_CATALOG_ISSUER"))
     orders_issuer_okta: str = field(default_factory=lambda: _env("OKTA_ORDERS_ISSUER"))
 
+    # ---- out-of-band notification ------------------------------------------
+    # email | console. Email is the default: it is the channel a shopper would
+    # really get, and it makes the out-of-band hop visible on stage. Console is
+    # for headless runs and the acceptance test.
+    notify_channel: str = field(
+        default_factory=lambda: _env("NOTIFY_CHANNEL", "email").lower()
+    )
+    # Where approval mail actually goes. The demo shoppers have unroutable
+    # addresses (alex@oktane.demo), so a live demo must redirect to a real inbox
+    # or nothing arrives. Empty falls back to the shopper's own address, which is
+    # the right behaviour once shoppers are real Okta users.
+    notify_email_to: str = field(default_factory=lambda: _env("NOTIFY_EMAIL_TO"))
+    smtp_host: str = field(default_factory=lambda: _env("SMTP_HOST"))
+    smtp_port: int = field(default_factory=lambda: int(_env("SMTP_PORT", "587")))
+    smtp_user: str = field(default_factory=lambda: _env("SMTP_USER"))
+    smtp_password: str = field(default_factory=lambda: _env("SMTP_PASSWORD"))
+    smtp_from: str = field(
+        default_factory=lambda: _env("SMTP_FROM", "no-reply@courtedge.demo")
+    )
+    smtp_from_name: str = field(default_factory=lambda: _env("SMTP_FROM_NAME", "CourtEdge"))
+    smtp_use_starttls: bool = field(default_factory=lambda: _flag("SMTP_STARTTLS", True))
+    smtp_use_ssl: bool = field(default_factory=lambda: _flag("SMTP_SSL", False))
+    # Short on purpose: a stalled mail server must not hold up the restock
+    # response while an audience watches a spinner.
+    smtp_timeout_seconds: float = field(
+        default_factory=lambda: float(_env("SMTP_TIMEOUT_SECONDS", "10"))
+    )
+    # Resend's HTTPS API, used instead of SMTP when NOTIFY_CHANNEL=resend.
+    # Render's free tier blocks outbound 25/465/587, so a deployed agent cannot
+    # deliver over smtplib at all; :443 is not blocked. The sending domain must
+    # be verified in Resend or the API answers 403 — hence the default is
+    # Resend's own sandbox sender, which needs no DNS at all. An unverified
+    # account may only mail its own owner from it, so the account has to belong
+    # to whoever NOTIFY_EMAIL_TO names.
+    resend_api_key: str = field(default_factory=lambda: _env("RESEND_API_KEY"))
+    resend_from: str = field(
+        default_factory=lambda: _env("RESEND_FROM", "onboarding@resend.dev")
+    )
+    resend_from_name: str = field(
+        default_factory=lambda: _env("RESEND_FROM_NAME", "CourtEdge")
+    )
+
     approval_ttl_seconds: int = field(
         default_factory=lambda: int(_env("APPROVAL_TTL_SECONDS", "900"))
     )
@@ -112,6 +154,20 @@ class Settings:
     @property
     def mock(self) -> bool:
         return self.demo_mode == "mock"
+
+    @property
+    def smtp_configured(self) -> bool:
+        """A host is the minimum. Everything else has a usable default.
+
+        Auth is optional deliberately: a local relay (MailHog, Mailpit) needs no
+        credentials, and that is the easiest way to rehearse the email beat.
+        """
+        return bool(self.smtp_host)
+
+    @property
+    def resend_configured(self) -> bool:
+        """The API key is the only thing without a usable default."""
+        return bool(self.resend_api_key)
 
     @property
     def org_issuer(self) -> str:

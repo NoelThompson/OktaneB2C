@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { Sparkles, ShieldCheck, Cpu } from 'lucide-react';
-import type { Approval, ChatMessage, Intent } from '@/lib/types';
+import type { Approval, ChatMessage, Intent, Notification } from '@/lib/types';
 import MessageBubble from './MessageBubble';
 import ChatComposer from './ChatComposer';
 import PendingIntentCard from './PendingIntentCard';
@@ -20,6 +20,7 @@ export default function AssistantPanel({
   approval,
   approvalSummary,
   resumeUrl,
+  notification,
   onSend,
   busy,
   signedIn,
@@ -30,6 +31,7 @@ export default function AssistantPanel({
   approval: Approval | null;
   approvalSummary: string;
   resumeUrl: string;
+  notification?: Notification | null;
   onSend: (message: string) => void;
   busy: boolean;
   signedIn: boolean;
@@ -95,6 +97,7 @@ export default function AssistantPanel({
             approval={approval}
             summary={approvalSummary}
             resumeUrl={resumeUrl}
+            notification={notification}
           />
         )}
 

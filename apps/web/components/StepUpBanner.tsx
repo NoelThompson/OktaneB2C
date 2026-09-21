@@ -8,7 +8,7 @@ import {
   Loader2,
   TriangleAlert,
 } from 'lucide-react';
-import type { Approval } from '@/lib/types';
+import type { Approval, Notification } from '@/lib/types';
 
 /**
  * Human-readable explanations for the check-name a step-up rejection returns.
@@ -47,10 +47,12 @@ export default function StepUpBanner({
   approval,
   summary,
   resumeUrl,
+  notification,
 }: {
   approval: Approval | null;
   summary: string;
   resumeUrl: string;
+  notification?: Notification | null;
 }) {
   const state = approval?.state ?? 'NOTIFIED';
   const settled = ['COMPLETED', 'DENIED', 'EXPIRED', 'FAILED'].includes(state);
@@ -99,8 +101,31 @@ export default function StepUpBanner({
         <>
           <p className="mt-2 text-[11px] leading-relaxed text-net-white/50">
             Back in stock. The assistant cannot spend your money on its own, so it
-            has asked you to approve this purchase and verify it is really you.
+            has emailed you to approve this purchase and verify it is really you.
           </p>
+
+          {notification && (
+            <div className="mt-2.5 flex items-start gap-2 rounded-md border border-neutral-border bg-neutral-bg/60 p-2">
+              {notification.delivered ? (
+                <MailCheck className="mt-px h-3.5 w-3.5 shrink-0 text-success-green" />
+              ) : (
+                <TriangleAlert className="mt-px h-3.5 w-3.5 shrink-0 text-accent" />
+              )}
+              <div className="min-w-0 flex-1">
+                <div className="font-mono text-[10px] text-net-white/60">
+                  {notification.delivered
+                    ? `Email sent to ${notification.to}`
+                    : 'Email not delivered'}
+                </div>
+                {!notification.delivered && notification.detail && (
+                  <p className="mt-0.5 break-words font-mono text-[10px] text-accent/80">
+                    {notification.detail}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
           <a
             href={resumeUrl}
             target="_blank"
@@ -108,7 +133,7 @@ export default function StepUpBanner({
             className="mt-3 inline-flex items-center gap-2 rounded-lg bg-okta-blue px-3 py-2 text-xs font-semibold text-net-white hover:bg-okta-blue-light"
           >
             <MailCheck className="h-3.5 w-3.5" />
-            Open the notification
+            Open the link from the email
           </a>
           <div className="mt-2 font-mono text-[10px] text-net-white/30">
             expires in {approval?.seconds_remaining ?? 900}s · a second factor is
