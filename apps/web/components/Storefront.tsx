@@ -211,7 +211,7 @@ export default function Storefront({
     tick();
     const timer = setInterval(() => {
       if (!settledRef.current) tick();
-    }, 2000);
+    }, 5000);
     return () => {
       cancelled = true;
       clearInterval(timer);
