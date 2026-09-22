@@ -86,7 +86,7 @@ export default function Storefront({
   }
 
   async function signOut() {
-    await fetch('/api/session', { method: 'DELETE' });
+    const response = await fetch('/api/logout', { method: 'POST' });
     setProfile(null);
     setMessages([]);
     setIntents([]);
@@ -94,6 +94,15 @@ export default function Storefront({
     setApprovalTrace([]);
     setRaised(null);
     setApproval(null);
+    await refreshProducts();
+
+    // Local state is already clear at this point; a real Okta session still
+    // needs the browser sent through end_session, or the next sign-in would
+    // skip the login form entirely and silently reuse this session.
+    const { logout_url } = response.ok
+      ? await response.json()
+      : { logout_url: null };
+    if (logout_url) window.location.href = logout_url;
   }
 
   async function send(message: string) {

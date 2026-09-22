@@ -78,6 +78,29 @@ def signin_url(return_to: str = "/") -> dict[str, str]:
     return {"authorize_url": f"{settings.user_authorize_url}?{urlencode(params)}"}
 
 
+@router.get("/auth/logout-url")
+def logout_url(id_token: str = "") -> dict[str, str | None]:
+    """Where to send the browser to clear the shopper's Okta session too.
+
+    Dropping this app's own cookie is not enough: the org authorization
+    server still has a live browser session, so a second sign-in with the
+    same shopper would skip the login form entirely. RP-initiated logout
+    needs the ID token this app is about to discard as ``id_token_hint`` —
+    that is the only way Okta accepts the request as coming from the same
+    session it is being asked to end, rather than any caller who guesses a
+    ``post_logout_redirect_uri``.
+    """
+    base = settings.user_logout_url
+    if base is None:
+        return {"logout_url": None}
+    params = {
+        "post_logout_redirect_uri": settings.web_base.rstrip("/"),
+    }
+    if id_token:
+        params["id_token_hint"] = id_token
+    return {"logout_url": f"{base}?{urlencode(params)}"}
+
+
 class CompleteBody(BaseModel):
     code: str
     state: str

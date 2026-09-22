@@ -141,21 +141,12 @@ export default function StepUpBanner({
               </p>
               <p className="mt-2 text-sm font-medium text-net-white">{summary}</p>
               <p className="mt-3 text-[11px] leading-relaxed text-net-white/55">
-                The assistant cannot spend your money on its own. Approve with a
-                second factor to release the purchase.
+                The assistant cannot spend your money on its own. Follow the
+                link in the email above to approve with a second factor and
+                release the purchase.
               </p>
-              <a
-                href={resumeUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-okta-blue px-4 py-2.5 text-sm font-semibold text-net-white hover:bg-okta-blue-light"
-              >
-                <Fingerprint className="h-4 w-4" />
-                Verify with Okta and approve
-              </a>
               <div className="mt-2 text-center font-mono text-[10px] text-net-white/25">
-                single-use link · expires in{' '}
-                {approval?.seconds_remaining ?? 900}s
+                expires in {approval?.seconds_remaining ?? 900}s
               </div>
             </div>
           </div>

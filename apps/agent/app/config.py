@@ -227,6 +227,18 @@ class Settings:
         return f"{self.org_issuer}/v1/keys"
 
     @property
+    def user_logout_url(self) -> str | None:
+        """RP-initiated logout (``end_session``) for the shopper's own sign-in.
+
+        None in mock mode: the mock authorization server never sets a browser
+        session, so there is nothing at the IdP for a logout redirect to clear
+        — only this app's own cookie, which the caller already drops.
+        """
+        if self.mock:
+            return None
+        return f"{self.org_issuer}/v1/logout"
+
+    @property
     def catalog(self) -> AuthServer:
         return AuthServer(
             name="oktane-catalog",
