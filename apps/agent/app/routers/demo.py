@@ -10,14 +10,17 @@ from __future__ import annotations
 import logging
 from typing import Any
 from urllib.parse import urlencode
+from uuid import uuid4
 
 import httpx
 from fastapi import APIRouter, HTTPException
+from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel
 
 from .. import mcp_client, telemetry
+from ..approvals import notifier as notify
 from ..approvals.notifier import get_notifier
-from ..approvals.store import ApprovalConflict, store
+from ..approvals.store import Approval, ApprovalConflict, store
 from ..config import settings
 from ..tokens import raw_flow
 from ..tokens.agent_key import agent_key
@@ -30,6 +33,11 @@ router = APIRouter(tags=["demo"])
 class RestockRequest(BaseModel):
     sku: str = "CE-BB-GAME-7"
     stock: int = 12
+
+
+class TestEmailRequest(BaseModel):
+    to: str
+    summary: str = "CourtEdge Game Ball — Size 7 · $59.99"
 
 
 @router.post("/demo/restock")
@@ -62,7 +70,13 @@ async def restock(body: RestockRequest) -> dict[str, Any]:
             f"{intent.product_name} — {intent.variant_label} "
             f"for ${intent.max_total_cents / 100:.2f}"
         )
-        get_notifier().notify(approval, resume_url, summary)
+        # Beat 7: the shopper is notified out of band, by email, as soon as the
+        # inventory above came back. Runs in a thread because the notifier is blocking
+        # and this is an async handler — a slow mail server would otherwise stall
+        # the whole event loop, including the poll the UI is already running.
+        delivery = await run_in_threadpool(
+            get_notifier().notify, approval, resume_url, summary
+        )
 
         try:
             store.transition(approval.approval_id, "REQUESTED", "NOTIFIED")
@@ -73,10 +87,11 @@ async def restock(body: RestockRequest) -> dict[str, Any]:
             approval.approval_id,
             TraceEvent(
                 kind="note",
-                label="Notification sent",
-                detail=summary,
+                label="Approval email sent" if delivery.ok else "Approval email not delivered",
+                detail=f"to {delivery.recipient} — {summary}" if delivery.recipient else summary,
+                ok=delivery.ok,
                 claims={
-                    "channel": get_notifier().name,
+                    **delivery.claims(),
                     "ttl_seconds": settings.approval_ttl_seconds,
                     "resume_url": resume_url,
                     "note": "This link names an approval — step-up still gates the order.",
@@ -89,7 +104,13 @@ async def restock(body: RestockRequest) -> dict[str, Any]:
                 "approval_id": approval.approval_id,
                 "intent_id": intent.intent_id,
                 "summary": summary,
-                # The link is surfaced because there is no real inbox in a demo.
+                "notification": {
+                    "channel": delivery.channel,
+                    "delivered": delivery.ok,
+                    "to": delivery.recipient,
+                    "detail": delivery.detail,
+                },
+                # The link is surfaced because a demo stage has no inbox to open.
                 # It is not an authorization: step-up still gates the order.
                 "resume_url": resume_url,
             }
@@ -119,6 +140,47 @@ def forget_tokens(body: ForgetTokens) -> dict[str, Any]:
     return {"subject": sub, "cache": "cleared"}
 
 
+@router.get("/demo/outbox")
+def outbox(approval_id: str | None = None) -> dict[str, Any]:
+    """The approval mail that was sent, so a stage demo can show it.
+
+    A rehearsal room rarely has a projectable inbox, and the point of the beat is
+    that the approval left the browser — not that a mail client rendered it. This
+    returns the exact message body that went to SMTP.
+    """
+    if approval_id:
+        mail = notify.latest_for(approval_id)
+        if mail is None:
+            raise HTTPException(404, "no notification recorded for that approval")
+        return {"mail": mail}
+    return {"outbox": notify.outbox()}
+
+
+@router.post("/demo/test-email")
+async def test_email(body: TestEmailRequest) -> dict[str, Any]:
+    """Send one approval email on demand, without staging a purchase.
+
+    Exists so the mail transport can be proved reachable from wherever the agent
+    is deployed — Render's free tier blocks outbound SMTP, and discovering that at
+    beat 7 in front of an audience is the failure this endpoint prevents.
+
+    Deliberately touches no state: the ``Approval`` below is constructed, never
+    registered in the store, so there is no state machine to corrupt and the
+    ``resume_url`` in the message names an approval that does not exist. The link
+    in a test email is inert by construction.
+    """
+    approval_id = f"test-{uuid4().hex[:8]}"
+    approval = Approval(approval_id, "test-intent", "demo@courtedge.demo", body.to)
+    resume_url = f"{settings.public_base}/auth/stepup/start?" + urlencode(
+        {"approval_id": approval_id, "code": "not-a-real-code"}
+    )
+
+    delivery = await run_in_threadpool(
+        get_notifier().notify, approval, resume_url, body.summary
+    )
+    return {"delivery": delivery.claims(), "recipient": body.to}
+
+
 @router.get("/demo/catalog")
 async def catalog() -> dict[str, Any]:
     """Public product listing, proxied so the storefront has one origin to talk to."""
@@ -131,6 +193,14 @@ def state(subject: str | None = None) -> dict[str, Any]:
     return {
         "demo_mode": settings.demo_mode,
         "token_exchange_impl": settings.token_exchange_impl,
+        "notification": {
+            "channel": get_notifier().name,
+            # Whether mail can actually leave. Worth knowing *before* walking on
+            # stage rather than discovering it at beat 7.
+            "smtp_configured": settings.smtp_configured,
+            "resend_configured": settings.resend_configured,
+            "redirect_to": settings.notify_email_to or None,
+        },
         "catalog": {
             "issuer": settings.catalog.issuer,
             "audience": settings.catalog.audience,

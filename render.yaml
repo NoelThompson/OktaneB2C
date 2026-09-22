@@ -29,6 +29,26 @@ services:
         value: "900"
       - key: STEPUP_FRESHNESS_SECONDS
         value: "120"
+      # Approval mail over Resend's HTTPS API. Render's free tier blocks
+      # outbound SMTP (25/465/587), so smtplib cannot deliver from here at all.
+      - key: NOTIFY_CHANNEL
+        value: resend
+      # Live secret — pasted in the Render dashboard, never committed.
+      - key: RESEND_API_KEY
+        sync: false
+      # Resend's shared sandbox sender. The account is registered as Billy, and
+      # an unverified account may send only from resend.dev and only to its own
+      # owner — which is exactly billy.buyer@atko.email below. Sending as
+      # no-reply@atko.email needs that domain's DKIM published in *this* account
+      # and answers 403 until it is.
+      - key: RESEND_FROM
+        value: onboarding@resend.dev
+      - key: RESEND_FROM_NAME
+        value: CourtEdge
+      # Without this, approval mail goes to the shopper's own address, which is
+      # not an inbox anyone is reading during the demo.
+      - key: NOTIFY_EMAIL_TO
+        value: billy.buyer@atko.email
       # Only consulted when DEMO_MODE=okta. Left unset while running against
       # the local mock authorization server (default). Set it (e.g.
       # dev-12345.okta.com) to verify real Okta ID tokens during step-up.

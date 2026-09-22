@@ -70,6 +70,18 @@ export interface Approval {
   history: string[];
 }
 
+/**
+ * The out-of-band notification that carried an approval request to the shopper.
+ * Mirrors the `notification` block on each entry of `approvals_raised`, which is
+ * built from `Delivery.claims()` in apps/agent/app/approvals/notifier.py.
+ */
+export interface Notification {
+  channel: string;
+  delivered: boolean;
+  to: string;
+  detail: string;
+}
+
 export type TraceKind =
   | 'user_token'
   | 'id_jag'

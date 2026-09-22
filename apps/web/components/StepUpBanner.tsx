@@ -8,7 +8,7 @@ import {
   Loader2,
   TriangleAlert,
 } from 'lucide-react';
-import type { Approval } from '@/lib/types';
+import type { Approval, Notification } from '@/lib/types';
 
 /**
  * Human-readable explanations for the check-name a step-up rejection returns.
@@ -47,10 +47,12 @@ export default function StepUpBanner({
   approval,
   summary,
   resumeUrl,
+  notification,
 }: {
   approval: Approval | null;
   summary: string;
   resumeUrl: string;
+  notification?: Notification | null;
 }) {
   const state = approval?.state ?? 'NOTIFIED';
   const settled = ['COMPLETED', 'DENIED', 'EXPIRED', 'FAILED'].includes(state);
@@ -99,21 +101,27 @@ export default function StepUpBanner({
         <div className="mt-3">
           <div className="overflow-hidden rounded-lg border border-okta-blue/25 bg-neutral-bg/70 shadow-inner">
             <div className="flex items-center gap-2 border-b border-neutral-border/60 bg-primary-light/40 px-3 py-2">
-              <MailCheck className="h-3.5 w-3.5 shrink-0 text-okta-blue-light" />
+              {notification && !notification.delivered ? (
+                <TriangleAlert className="h-3.5 w-3.5 shrink-0 text-accent" />
+              ) : (
+                <MailCheck className="h-3.5 w-3.5 shrink-0 text-okta-blue-light" />
+              )}
               <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-okta-blue-light">
-                New notification
+                {notification && !notification.delivered
+                  ? 'Email not delivered'
+                  : 'New notification'}
               </div>
               <div className="ml-auto text-[10px] text-net-white/30">just now</div>
             </div>
             <dl className="space-y-0.5 border-b border-neutral-border/60 px-3 py-2.5 font-mono text-[11px]">
               <div className="flex gap-2">
                 <dt className="w-14 shrink-0 text-net-white/35">to</dt>
-                <dd className="text-net-white/80">customer@atko.email</dd>
+                <dd className="text-net-white/80">{notification?.to ?? 'customer@atko.email'}</dd>
               </div>
               <div className="flex gap-2">
                 <dt className="w-14 shrink-0 text-net-white/35">from</dt>
                 <dd className="text-net-white/60">
-                  OktaneB2C Notifications &lt;no-reply@oktaneb2c.demo&gt;
+                  CourtEdge &lt;onboarding@resend.dev&gt;
                 </dd>
               </div>
               <div className="flex gap-2">
@@ -121,6 +129,11 @@ export default function StepUpBanner({
                 <dd className="text-net-white">Approve your purchase</dd>
               </div>
             </dl>
+            {notification && !notification.delivered && notification.detail && (
+              <p className="break-words border-b border-neutral-border/60 px-3 py-2 font-mono text-[10px] text-accent/80">
+                {notification.detail}
+              </p>
+            )}
             <div className="px-3 py-3">
               <p className="text-xs leading-relaxed text-net-white/70">
                 Your shopping assistant is ready to place this order on your
@@ -147,8 +160,11 @@ export default function StepUpBanner({
             </div>
           </div>
           <p className="mt-2 pl-1 text-[10px] italic leading-relaxed text-net-white/30">
-            Simulated inbox for the demo — in production this delivers to a real
-            email provider.
+            {notification
+              ? notification.delivered
+                ? `Sent over ${notification.channel} — check the inbox above.`
+                : 'Delivery failed — this preview stands in until it can be resent.'
+              : 'Simulated inbox for the demo — in production this delivers to a real email provider.'}
           </p>
         </div>
       )}
