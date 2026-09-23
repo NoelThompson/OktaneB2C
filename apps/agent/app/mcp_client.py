@@ -22,12 +22,14 @@ from .tokens.factory import token_for
 
 log = logging.getLogger("oktane.mcp_client")
 
-# Render's free tier suspends idle containers. When a request lands on a cold
-# service, Render's front proxy responds with 502 while the container spins up
-# — typically 20-30 seconds. Retrying absorbs that so a shopper clicking a
-# button doesn't see a failure that will fix itself in half a minute.
-_TRANSIENT_STATUSES = frozenset({502, 503, 504})
-_MAX_RETRIES = 3
+# Render's free tier is unfriendly in two ways: containers suspend after idle
+# (cold start observed at ~21 s, so budget at least 30 s here), and the front
+# proxy imposes a burst rate limit that returns 429 when multiple tool calls
+# fire in quick succession. Retrying absorbs both. Total worst case:
+# _MAX_RETRIES * _BACKOFF_SECONDS = 15 * 2s = 30 s, comfortably over the cold
+# start ceiling.
+_TRANSIENT_STATUSES = frozenset({429, 502, 503, 504})
+_MAX_RETRIES = 15
 _BACKOFF_SECONDS = 2.0
 
 
@@ -137,7 +139,33 @@ async def call_tool(
             headers={"authorization": f"Bearer {exchange.access_token}"},
         )
 
-    body = response.json()
+    # After retries: if MCP is still returning a non-JSON error page (cold-start
+    # 5xx, gateway 429), surface it as a structured McpError instead of blowing
+    # up on response.json(). The retry helper already absorbs transient statuses
+    # up to _MAX_RETRIES; anything left here is a real failure the caller needs
+    # to see.
+    if response.status_code >= 400:
+        preview = response.text[:200].replace("\n", " ")
+        log.warning(
+            "MCP %s returned %d after retries: %s", tool, response.status_code, preview
+        )
+        raise McpError(
+            tool,
+            -32000,
+            f"MCP unreachable (HTTP {response.status_code})",
+            {"reason": "mcp_unreachable", "detail": preview, "status": response.status_code},
+        )
+
+    try:
+        body = response.json()
+    except ValueError as exc:
+        preview = response.text[:200].replace("\n", " ")
+        raise McpError(
+            tool,
+            -32603,
+            "MCP returned non-JSON body",
+            {"reason": "invalid_response", "detail": preview},
+        ) from exc
 
     if "error" in body:
         err = body["error"]

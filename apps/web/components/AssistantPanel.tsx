@@ -110,7 +110,7 @@ export default function AssistantPanel({
         placeholder={
           signedIn ? 'Ask about sizing, stock, or your orders…' : 'Sign in to chat'
         }
-        suggestions={messages.length === 0 && signedIn ? SUGGESTIONS : []}
+        suggestions={signedIn ? SUGGESTIONS : []}
       />
     </section>
   );
