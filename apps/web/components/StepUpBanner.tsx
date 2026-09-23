@@ -122,13 +122,20 @@ export default function StepUpBanner({
               </div>
               <div className="flex gap-2">
                 <dt className="w-14 shrink-0 text-net-white/35">from</dt>
-                <dd className="text-net-white/60">CourtEdge &lt;onboarding@resend.dev&gt;</dd>
+                <dd className="text-net-white/60">
+                  CourtEdge &lt;onboarding@resend.dev&gt;
+                </dd>
               </div>
               <div className="flex gap-2">
                 <dt className="w-14 shrink-0 text-net-white/35">subject</dt>
                 <dd className="text-net-white">Approve your purchase</dd>
               </div>
             </dl>
+            {notification && !notification.delivered && notification.detail && (
+              <p className="break-words border-b border-neutral-border/60 px-3 py-2 font-mono text-[10px] text-accent/80">
+                {notification.detail}
+              </p>
+            )}
             <div className="px-3 py-3">
               <p className="text-xs leading-relaxed text-net-white/70">
                 Your shopping assistant is ready to place this order on your
@@ -136,31 +143,21 @@ export default function StepUpBanner({
               </p>
               <p className="mt-2 text-sm font-medium text-net-white">{summary}</p>
               <p className="mt-3 text-[11px] leading-relaxed text-net-white/55">
-                The assistant cannot spend your money on its own. Approve with a
-                second factor to release the purchase.
+                The assistant cannot spend your money on its own. Follow the
+                link in the email above to approve with a second factor and
+                release the purchase.
               </p>
-              {notification && !notification.delivered && notification.detail && (
-                <p className="mt-2 break-words font-mono text-[10px] text-accent/80">
-                  {notification.detail}
-                </p>
-              )}
-              <a
-                href={resumeUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-okta-blue px-4 py-2.5 text-sm font-semibold text-net-white hover:bg-okta-blue-light"
-              >
-                <Fingerprint className="h-4 w-4" />
-                Verify with Okta and approve
-              </a>
               <div className="mt-2 text-center font-mono text-[10px] text-net-white/25">
-                single-use link · expires in{' '}
-                {approval?.seconds_remaining ?? 900}s
+                expires in {approval?.seconds_remaining ?? 900}s
               </div>
             </div>
           </div>
           <p className="mt-2 pl-1 text-[10px] italic leading-relaxed text-net-white/30">
-            This is a real email, sent over Resend to the address above.
+            {notification
+              ? notification.delivered
+                ? `Sent over ${notification.channel} — check the inbox above.`
+                : 'Delivery failed — this preview stands in until it can be resent.'
+              : 'Simulated inbox for the demo — in production this delivers to a real email provider.'}
           </p>
         </div>
       )}
